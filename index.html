@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Radiology Impression Rater</title>
+  <meta name="description"
+    content="Radiology impression evaluation tool - professional scoring system for blinded model outputs">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#070914">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩻</text></svg>">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+
+<body>
+  <div class="bg" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="grid"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <div class="mark-inner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+        </div>
+      </div>
+      <div class="brand-text">
+        <div class="title">Radiology Impression Rater</div>
+        <div class="subtitle">Blinded Evaluation • Score 1-5 • Auto-save</div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <span id="userBadge" class="badge hidden">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span id="userBadgeText"></span>
+      </span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- LOGIN -->
+    <section id="screenLogin" class="card glass">
+      <div class="card-head">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
+        </div>
+        <div>
+          <h1>Radiology Annotation Platform</h1>
+          <p class="muted">Three-stage evaluation process. Same user ID continues from where you left off.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label class="label" for="userId">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            Email Address (required)
+          </label>
+          <input id="userId" class="input" type="email" placeholder="e.g. doctor@example.com" autocomplete="email"
+            required />
+          <div class="hint">⚠️ <strong>Important:</strong> Use the same email every time to maintain progress.</div>
+        </div>
+      </div>
+
+      <details class="details" open>
+        <summary>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          Evaluation Process
+        </summary>
+        <div style="padding:12px 0;">
+          <div
+            style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span
+                style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--accent);color:white;border-radius:50%;font-weight:bold;font-size:13px;">1</span>
+              <strong>Data Quality Assessment</strong>
+            </div>
+            <ul style="margin:0 0 0 32px;padding:0;">
+              <li><strong>100 cases</strong> (25 per difficulty level 1-4)</li>
+              <li>Evaluate <strong>case hardness</strong>: reasoning complexity from findings → impression (1-4 scale)
+              </li>
+              <li>Evaluate <strong>CoT quality</strong>: Chain-of-thought reasoning quality (1-5 scale)</li>
+              <li>Fixed cases for all users, shuffled order per user</li>
+            </ul>
+          </div>
+
+          <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span
+                style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--accent);color:white;border-radius:50%;font-weight:bold;font-size:13px;">2</span>
+              <strong>Model Output Evaluation</strong>
+            </div>
+            <ul style="margin:0 0 0 32px;padding:0;">
+              <li><strong>30 cases</strong> (10 per dataset: RexGradient, CheXpert, MIMIC-CXR)</li>
+              <li>Rate <strong>7 blinded models</strong> (shown as A-G) on scale 1-5</li>
+              <li>Criteria: correctness, completeness, conciseness, format, no hallucinations</li>
+              <li>Fixed cases for all users, randomized model order per user</li>
+            </ul>
+          </div>
+
+          <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span
+                style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--accent);color:white;border-radius:50%;font-weight:bold;font-size:13px;">3</span>
+              <strong>Chain-of-Thought Quality Evaluation</strong>
+            </div>
+            <ul style="margin:0 0 0 32px;padding:0;">
+              <li><strong>30 cases</strong> (10 per dataset: RexGradient, CheXpert, MIMIC-CXR)</li>
+              <li>Rate <strong>CoT reasoning quality</strong> on scale 1-5</li>
+              <li>Criteria: logical flow, medical accuracy, completeness, clarity</li>
+              <li>Fixed cases for all users, shuffled order per user</li>
+            </ul>
+          </div>
+
+          <div style="margin-top:12px;padding:12px;background:rgba(90,123,181,0.1);border-radius:8px;font-size:13px;">
+            <strong>Progress tracking:</strong> You can pause and resume anytime. The system remembers your position and
+            saved ratings.
+          </div>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button id="btnStart" class="btn primary" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          Start / Resume
+        </button>
+      </div>
+
+
+      <div id="loginStatus" class="status"></div>
+    </section>
+
+    <!-- APP -->
+    <section id="screenApp" class="hidden">
+      <div class="toolbar">
+        <div class="toolbar-right" style="width:100%;justify-content:flex-end;gap:16px;">
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">Data Quality:</span>
+              <span id="dataQualityProgressText" style="font-weight:600;">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="dataQualityProgressFill" class="progress-fill" style="width:0%;background:#4caf50;"></div>
+            </div>
+          </div>
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 11 12 14 22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">Model Eval:</span>
+              <span id="progressText">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="progressFill" class="progress-fill" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">CoT Eval:</span>
+              <span id="modelEvalCotProgressText">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="modelEvalCotProgressFill" class="progress-fill" style="width:0%;background:#2be4a7;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section id="caseCard" class="card" aria-live="polite"></section>
+
+      <div class="actions sticky">
+        <button id="btnPrev" class="btn ghost" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Previous
+        </button>
+        <button id="btnSaveNext" class="btn primary" type="button">
+          Save & Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="appStatus" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- HARDNESS EVALUATION SCREEN -->
+    <section id="screenHardness" class="hidden">
+      <div class="toolbar">
+        <div class="toolbar-right" style="width:100%;justify-content:flex-end;gap:16px;">
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">Data Quality:</span>
+              <span id="hardnessProgressText" style="font-weight:600;">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="hardnessProgressFill" class="progress-fill" style="width:0%;background:#4caf50;"></div>
+            </div>
+          </div>
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 11 12 14 22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">Model Eval:</span>
+              <span id="hardnessModelEvalProgressText">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="hardnessModelEvalProgressFill" class="progress-fill" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">CoT Eval:</span>
+              <span id="hardnessCotProgressText">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="hardnessCotProgressFill" class="progress-fill" style="width:0%;background:#2be4a7;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section id="hardnessCard" class="card" aria-live="polite"></section>
+
+      <div class="actions sticky">
+        <button id="btnHardnessPrev" class="btn ghost" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Previous
+        </button>
+        <button id="btnHardnessSaveNext" class="btn primary" type="button">
+          Save & Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="hardnessStatus" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- COT EVALUATION SCREEN -->
+    <section id="screenCot" class="hidden">
+      <div class="toolbar">
+        <div class="toolbar-right" style="width:100%;justify-content:flex-end;gap:16px;">
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">Data Quality:</span>
+              <span id="cotDataQualityProgressText" style="font-weight:600;">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="cotDataQualityProgressFill" class="progress-fill" style="width:0%;background:#4caf50;"></div>
+            </div>
+          </div>
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 11 12 14 22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">Model Eval:</span>
+              <span id="cotModelEvalProgressText">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="cotModelEvalProgressFill" class="progress-fill" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+            style="flex:0 1 300px;">
+            <div class="progress-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+              </svg>
+              <span style="font-size:11px;color:var(--muted);">CoT Eval:</span>
+              <span id="cotProgressText" style="font-weight:600;">0/30</span>
+            </div>
+            <div class="progress-bar">
+              <div id="cotProgressFill" class="progress-fill" style="width:0%;background:#2be4a7;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section id="cotCard" class="card" aria-live="polite"></section>
+
+      <div class="actions sticky">
+        <button id="btnCotPrev" class="btn ghost" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Previous
+        </button>
+        <button id="btnCotSaveNext" class="btn primary" type="button">
+          Save & Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="cotStatus" class="status" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <span class="footer-brand">Radiology Impression Rater</span>
+      <span class="footer-sep">|</span>
+      <span>Powered by Supabase & GitHub Pages</span>
+    </div>
+  </footer>
+</body>
+
+</html>
